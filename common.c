@@ -131,7 +131,7 @@ server_socket (struct in_addr addr, int port, int backlog)
   s = socket (PF_INET, SOCK_STREAM, 0);
   if (s == -1)
     return -1;
-  
+
   i = 1;
   if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (void *)&i, sizeof i) == -1)
     {
@@ -146,7 +146,7 @@ server_socket (struct in_addr addr, int port, int backlog)
   address.sin_family = PF_INET;
   address.sin_port = htons ((short)port);
   address.sin_addr = addr;
-  
+
   if (bind (s, (struct sockaddr *)&address, sizeof (address)) == -1)
     {
       close (s);
@@ -157,41 +157,23 @@ server_socket (struct in_addr addr, int port, int backlog)
     {
       close (s);
       return -1;
-    } 
+    }
 
   return s;
 }
 
 int
-set_address (struct sockaddr_in *address, const char *host, int port)
+set_address (struct sockaddr_in6 *address, const char *host, int port)
 {
   memset (address, '\0', sizeof *address);
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
   address->sin_len = sizeof *address;
 #endif
-  address->sin_family = PF_INET;
-  address->sin_port = htons ((u_short)port);
-  address->sin_addr.s_addr = inet_addr (host);
+  // address->sin6_len = sizeof(address);
+  address->sin6_family = PF_INET6;
+  address->sin6_port = htons ((u_short)port);
 
-  if (address->sin_addr.s_addr == INADDR_NONE)
-    {
-      struct hostent *ent;
-      unsigned int ip;
-
-      log_annoying ("set_address: gethostbyname (\"%s\")", host);
-      ent = gethostbyname (host);
-      log_annoying ("set_address: ent = %p", ent);
-      if (ent == 0)
-	return -1;
-
-      memcpy(&address->sin_addr.s_addr, ent->h_addr, (unsigned)ent->h_length);
-      ip = ntohl (address->sin_addr.s_addr);
-      log_annoying ("set_address: host = %d.%d.%d.%d",
-		     ntohl (ip) >> 24,
-		    (ntohl (ip) >> 16) & 0xff,
-		    (ntohl (ip) >>  8) & 0xff,
-		     ntohl (ip)        & 0xff);
-    }
+  inet_pton(AF_INET6, host, &address->sin6_addr.s6_addr);
 
   return 0;
 }
@@ -205,7 +187,7 @@ open_device (char *device)
   fd = open (device, O_RDWR | O_NONBLOCK);
   if (fd == -1)
     return -1;
-  
+
   if (tcgetattr (fd, &t) == -1)
     {
       if (errno == ENOTTY || errno == EINVAL)
@@ -351,7 +333,7 @@ name_and_port (const char *nameport, char **name, int *port)
       exit (1);
     }
 
-  p = strchr (*name, ':');
+  p = strrchr (*name, ':');
   if (p != NULL)
     {
       *port = atoi (p + 1);

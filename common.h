@@ -59,7 +59,7 @@ static inline void log_annoying () {}
 #endif
 
 extern int server_socket (struct in_addr addr, int port, int backlog);
-extern int set_address (struct sockaddr_in *address,
+extern int set_address (struct sockaddr_in6 *address,
 			const char *host, int port);
 extern int open_device (char *device);
 extern int handle_device_input (Tunnel *tunnel, int fd, int events);
@@ -132,16 +132,16 @@ write_all (int fd, void *data, size_t len)
 }
 
 static inline int
-do_connect (struct sockaddr_in *address)
+do_connect (struct sockaddr_in6 *address)
 {
   int fd;
 
-  fd = socket (AF_INET, SOCK_STREAM, 0);
+  fd = socket (AF_INET6, SOCK_STREAM, 0);
   if (fd == -1)
     return -1;
 
   if (connect (fd, (struct sockaddr *)address,
-	       sizeof (struct sockaddr_in)) == -1)
+	       sizeof (struct sockaddr_in6)) == -1)
     {
       close (fd);
       return -1;
@@ -167,7 +167,7 @@ handle_input (const char *type, Tunnel *tunnel, int fd, int events,
 	  else
 	    log_error ("%s read error: %s", type, strerror (errno));
 	  *closed = TRUE;
-	}		
+	}
     }
 }
 

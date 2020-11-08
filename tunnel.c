@@ -75,7 +75,7 @@ struct tunnel
   int in_fd, out_fd;
   int server_socket;
   Http_destination dest;
-  struct sockaddr_in address;
+  struct sockaddr_in6 address;
   size_t bytes;
   size_t content_length;
   char buf[65536];
@@ -352,12 +352,7 @@ tunnel_out_connect (Tunnel *tunnel)
   tunnel->out_fd = do_connect (&tunnel->address);
   if (tunnel->out_fd == -1)
     {
-      log_error ("tunnel_out_connect: do_connect (%d.%d.%d.%d:%u) error: %s",
-		  ntohl (tunnel->address.sin_addr.s_addr) >> 24,
-		 (ntohl (tunnel->address.sin_addr.s_addr) >> 16) & 0xff,
-		 (ntohl (tunnel->address.sin_addr.s_addr) >>  8) & 0xff,
-		  ntohl (tunnel->address.sin_addr.s_addr)        & 0xff,
-		  ntohs (tunnel->address.sin_port),
+      log_error ("tunnel_out_connect: do_connect () error: %s",
 		 strerror (errno));
       return -1;
     }
@@ -1083,7 +1078,7 @@ tunnel_accept (Tunnel *tunnel)
 
   while (tunnel->in_fd == -1 || tunnel->out_fd == -1)
     {
-      struct sockaddr_in addr;
+      struct sockaddr_in6 addr;
       Http_request *request;
       struct pollfd p;
       ssize_t m;
@@ -1113,13 +1108,6 @@ tunnel_accept (Tunnel *tunnel)
 	  log_error ("tunnel_accept: accept error: %s", strerror (errno));
 	  return -1;
 	}
-
-      log_notice ("connection from %d.%d.%d.%d:%u",
-		  ntohl (addr.sin_addr.s_addr) >> 24,
-		 (ntohl (addr.sin_addr.s_addr) >> 16) & 0xff,
-		 (ntohl (addr.sin_addr.s_addr) >>  8) & 0xff,
-		  ntohl (addr.sin_addr.s_addr)        & 0xff,
-                  ntohs (addr.sin_port));
 
       m = http_parse_request (s, &request);
       if (m <= 0)
